@@ -14,7 +14,7 @@ app.get("/",(req,res)=>{
 
 app.use("/user", require("./Routes/user"));
 app.use("/tasks", require("./Routes/tasks"));
-
+app.use("/token",require("./Routes/refreshtokenRoute"))
 
 app.listen(Port,()=>{
     console.log("server is started");

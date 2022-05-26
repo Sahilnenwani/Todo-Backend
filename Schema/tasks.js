@@ -14,5 +14,5 @@ const tasksSchema=new Schema({
 })
 
 const tasks=mongoose.model("Tasks",tasksSchema);
-tasks.createIndexes();
+// tasks.createIndexes();
 module.exports=tasks;

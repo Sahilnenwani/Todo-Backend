@@ -1,53 +1,66 @@
 const res = require('express/lib/response');
 const jwt = require('jsonwebtoken');
-const JWT_Secret="mysecretvalue";
-const JWT_Secret_Refresh="refrehtokenmysecretvalue";
+const JWT_Secret = "mysecretvalue";
+const JWT_Secret_Refresh = "refrehtokenmysecretvalue";
 
-const verifyJWT=(req,res,next)=>{
-    const authHeader=req.headers['authorization'];
-    if (!authHeader) return res.sendStatus(401);
+const verifyJWT = (req, res, next) => {
+    const accessToken = req.headers.authorization;
+    if (!accessToken) return res.sendStatus(401);
     const cookies = req.cookies;
     if (!cookies?.jwt) return res.sendStatus(401);
     const refreshToken = cookies.jwt;
 
 
-    let isExpiredToken=false;
-    let dateNow = new Date();
-    if (authHeader.exp<dateNow.getTime()) {
-        isExpiredToken=true;
-    }
-    console.log(authHeader);
-    const token=authHeader.split(' ')[1];
+    // let isExpiredToken = false;
+    // let dateNow = new Date();
+    // if (accessToken.exp < dateNow.getTime()) {
+    //     isExpiredToken = true;
+    // }
+
+    // if (isExpiredToken) {
+    //     console.log("current token is expired");        
+    // }
+
+
+
+    console.log("auth header ",accessToken);
+    // const token = authHeader.split('')[0];
+    // console.log("token it self",token)
+    
     jwt.verify(
-        token,
+        accessToken,
         JWT_Secret,
-        (err,decoded)=>{
-           
-            next(); 
+        (err, decodedtoken) => {
+            console.log(err)
+            if (err =="TokenExpiredError") {
+                jwt.verify(
+                    refreshToken,
+                    JWT_Secret_Refresh,
+                    (err, decoded) => {
+                        if (err) return res.sendStatus(403); 
+                            const accessToken = jwt.sign(
+                            {
+                                id: decodedtoken.id,
+                                username: decodedtoken.username,
+                            },
+                            JWT_Secret,
+                            { expiresIn: '10s' }
+                        );
+                        console.log("not renewing the token")
+                        next();
+                
+                    }
+                );
+            }
+            else if(!err.TokenExpiredError && err){
+                 return res.sendStatus(403);
+            }
+            next();
         }
     )
+
     
-    if (isExpiredToken) {
-         jwt.verify(
-        refreshToken,
-       JWT_Secret_Refresh,
-        (err, decoded) => {
-            const accessToken = jwt.sign(
-                {
-                    "UserInfo": {
-                        "username": decoded.username
-                    }
-                },
-                process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '10s' }
-            );
-            res.json({ accessToken })
-        }
-    );
-    }
-
-
 }
 
 
-module.exports=verifyJWT;
+module.exports = verifyJWT;

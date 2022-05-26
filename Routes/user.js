@@ -6,7 +6,8 @@ const user = require("../Schema/users");
 const jwt = require('jsonwebtoken');
 const JWT_Secret="mysecretvalue";
 const JWT_Secret_Refresh="refrehtokenmysecretvalue";
-const verifyJWT =require('./verifyJWT')
+const verifyJWT =require('../Middlewares/verifyJWT');
+const session = require("../Schema/session");
 // let arr=[
 // {
 //     userName:"Sahil Nenwani",
@@ -21,35 +22,57 @@ const verifyJWT =require('./verifyJWT')
 // ];
 
 
-router.get("/", verifyJWT,(req, res) => {
-    let userssData = user.find({}, (err, data) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.json(data);
-        }
-    })
-
-
+router.get("/:userID", verifyJWT,async (req, res) => {
+    let userssData = await user.findById(req.params.userID).populate("tasks");
+    res.json(userssData);
 })
 
 router.post("/login", async (req, res) => {
     const { userName, password } = req.body;
     const User = await user.findOne({ userName }).lean();
-
-    if (!user) {
+    
+    if (!User) {
         return res.json({ status: "error", error: "invalid username/password" });
     }
 
     if (await bcrypt.compare(password, User.password)) {
-
         const token = jwt.sign({ id: User._id, username: User.userName, },JWT_Secret,{expiresIn: '10s'})
         const refreshToken=jwt.sign({ id: User._id, username: User.userName },JWT_Secret_Refresh,{expiresIn: '1d'})
         res.cookie('jwt',refreshToken,{httpOnly:true, maxAge:24*60*60*1000 })
         res.json({ status: 'ok', accessToken: token })
     }
 })
+
+router.post("/logout", async (req,res)=>{
+    const cookies = req.cookies;
+    if (!cookies?.jwt) return res.sendStatus(204);
+    const refreshToken = cookies.jwt;
+    const accessToken = req.headers.authorization;
+    if (!accessToken) return res.sendStatus(401);
+    console.log(accessToken)
+    const tokenData={
+        refreshToken,
+        accessToken
+    }
+    const responce = await session.create(tokenData);
+    res.status(200).json({
+        "message":"logout success"
+    })
+   
+   
+   
+    // let userLogout= await user.findById(req.params.userId);
+    // let refreshtoken = {refreshToken:refreshTokenFromCookie};
+    // const data= await user.findByIdAndUpdate(req.params.userId,userLogout,refreshtoken,()=>{
+    //     if (err) {
+    //         return res.sendStatus(500)
+    //     }
+    //         return res.sendStatus(200)
+    // });
+    // user.fin
+
+} )
+
 
 router.post("/register", async (req, res) => {
     const { userName, Email, password } = req.body;
@@ -63,7 +86,7 @@ router.post("/register", async (req, res) => {
     const userData = {
         userName,
         Email,
-        password: passwordHash
+        password: passwordHash,
     }
     try {
         const responce = await user.create(userData);

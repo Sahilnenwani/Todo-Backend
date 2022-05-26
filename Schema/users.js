@@ -1,4 +1,5 @@
 const mongoose=require("mongoose");
+const tasks = require("./tasks");
 const {Schema}=mongoose;
 
 const userSchema=new Schema({
@@ -15,9 +16,13 @@ const userSchema=new Schema({
         type:String,
         required:true
     },
-    refreshToken:[String]
+    tasks:[{
+        type:Schema.Types.ObjectId,
+        ref:"Tasks"
+
+    }]
 })
 
 const user=mongoose.model("user",userSchema);
-user.createIndexes();
+// user.createIndexes();
 module.exports=user;
