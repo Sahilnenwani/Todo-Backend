@@ -30,6 +30,8 @@ router.get("/", verifyJWT,(req, res) => {
             res.json(data);
         }
     })
+
+
 })
 
 router.post("/login", async (req, res) => {
@@ -42,7 +44,7 @@ router.post("/login", async (req, res) => {
 
     if (await bcrypt.compare(password, User.password)) {
 
-        const token = jwt.sign({ id: User._id, username: User.userName, },JWT_Secret,{expiresIn: '60s'})
+        const token = jwt.sign({ id: User._id, username: User.userName, },JWT_Secret,{expiresIn: '10s'})
         const refreshToken=jwt.sign({ id: User._id, username: User.userName },JWT_Secret_Refresh,{expiresIn: '1d'})
         res.cookie('jwt',refreshToken,{httpOnly:true, maxAge:24*60*60*1000 })
         res.json({ status: 'ok', accessToken: token })
