@@ -7,22 +7,26 @@ const session=require("../Schema/session")
 const verifyJWT = async (req, res, next) => {
     const accessToken = req.headers.authorization;
     if (!accessToken) return res.sendStatus(401);
-    console.log(accessToken)
+    // console.log(accessToken)
+
+    const cookies = req.cookies;
+    if (!cookies?.jwt) return res.sendStatus(401);
+    const refreshToken = cookies.jwt;
     
     // let userData= await user.findById(req.params.userId);
     // console.log("user data",userData)
 
     const sessionData=await session.findOne({accessToken});
-    console.log(sessionData)
+    // console.log(sessionData)
 
     if (!sessionData) {
-        if (sessionData?.accessToken == accessToken) {
+        if (sessionData?.accessToken == accessToken && sessionData?.refreshToken == refreshToken ) {
             res.json({
                 "message":"you are logged out"
             })    
         }
         else{
-            console.log("auth header ",accessToken);
+            
             // const token = authHeader.split('')[0];
             // console.log("token it self",token)
             

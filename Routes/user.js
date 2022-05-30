@@ -23,11 +23,26 @@ const session = require("../Schema/session");
 
 
 router.get("/:userID", verifyJWT,async (req, res) => {
+
+    let aggregateData=await user.aggregate([
+        {
+            $project:{
+                _id:req.params.userID,
+                totalTasks:{$size:"$tasks"}
+            }
+        }
+    ])
+    // let aggregateData= await user.aggregate([ {
+    //     $group:{ _id: null, totalSize: { $sum: { $size: "$tasks"}}}
+    //     }
+    // ])
+    console.log("performed Aggregation",aggregateData);
     let userssData = await user.findById(req.params.userID).populate("tasks");
-    res.json(userssData);
+    // res.json(userssData,aggregateData.toString());
+    res.json({userssData,aggregateData});
 })
 
-router.post("/login", async (req, res) => {
+router.post("/login", async (req, res) => {            
     const { userName, password } = req.body;
     const User = await user.findOne({ userName }).lean();
     

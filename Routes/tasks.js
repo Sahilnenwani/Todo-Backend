@@ -52,6 +52,7 @@ router.post("/cTask/:userID", async (req, res) => {
     req.params.userID,
     {
       tasks: [
+        ...usersData.tasks,
         saveTasks._id,
 ]},
     (err) => {
@@ -59,8 +60,8 @@ router.post("/cTask/:userID", async (req, res) => {
     }
   );
 
-  console.log(usersData);
-  console.log(saveTasks._id);
+  // console.log(usersData);
+  // console.log(saveTasks._id);
 
   res.json(saveTasks);
 });
