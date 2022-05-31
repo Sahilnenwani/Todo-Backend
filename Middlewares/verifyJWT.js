@@ -20,7 +20,7 @@ const verifyJWT = async (req, res, next) => {
     // console.log(sessionData)
 
     if (!sessionData) {
-        if (sessionData?.accessToken == accessToken && sessionData?.refreshToken == refreshToken ) {
+        if (sessionData?.accessToken == accessToken  ) {
             res.json({
                 "message":"you are logged out"
             })    

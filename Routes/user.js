@@ -24,37 +24,60 @@ const session = require("../Schema/session");
 
 router.get("/:userID", verifyJWT,async (req, res) => {
 
+    let userssData = await user.findById(req.params.userID).populate("tasks");
+
+
+
     let aggregateData=await user.aggregate([
-        {
+        
+            // $project:{
+            //     _id: req.params.userID,
+            //     totalTasks:{"$size": { "$ifNull": [ "$tasks", [] ]}}
+            // }
+           
+            { 
+                $match:{
+              userName: userssData.userName
+            } 
+               },
+               {
             $project:{
-                _id:req.params.userID,
-                totalTasks:{$size:"$tasks"}
+                totalTasks:{"$size": { "$ifNull": [ "$tasks", [] ]}}
+               
             }
+        
         }
     ])
+    
+    
     // let aggregateData= await user.aggregate([ {
-    //     $group:{ _id: null, totalSize: { $sum: { $size: "$tasks"}}}
+    //     $group:{ _id: req.params.id, totalSize: { $sum: { "$size": { "$ifNull": [ "$tasks", [] ]}}}}
     //     }
     // ])
+
     console.log("performed Aggregation",aggregateData);
-    let userssData = await user.findById(req.params.userID).populate("tasks");
-    // res.json(userssData,aggregateData.toString());
+   
     res.json({userssData,aggregateData});
 })
 
 router.post("/login", async (req, res) => {            
     const { userName, password } = req.body;
     const User = await user.findOne({ userName }).lean();
-    
+    console.log("user data in login request",User)
+
     if (!User) {
         return res.json({ status: "error", error: "invalid username/password" });
     }
 
+    
     if (await bcrypt.compare(password, User.password)) {
         const token = jwt.sign({ id: User._id, username: User.userName, },JWT_Secret,{expiresIn: '10s'})
         const refreshToken=jwt.sign({ id: User._id, username: User.userName },JWT_Secret_Refresh,{expiresIn: '1d'})
         res.cookie('jwt',refreshToken,{httpOnly:true, maxAge:24*60*60*1000 })
         res.json({ status: 'ok', accessToken: token })
+    }
+    else{
+        res.sendStatus(401);
     }
 })
 
